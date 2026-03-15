@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Body Motion Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js CDN (free, no API key required) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header>
+    <h1>🏃 Body Motion Dashboard</h1>
+    <span id="status-badge" class="badge badge-inactive">Sensors Off</span>
+  </header>
+
+  <!-- ── Permission Panel ──────────────────────────────────── -->
+  <section id="permission-panel">
+    <p>Open this page on your smartphone, then tap the button below to start tracking.</p>
+    <button id="enable-btn">Enable Motion Tracking</button>
+    <p id="permission-msg" class="permission-msg"></p>
+  </section>
+
+  <!-- ── Main Dashboard Grid ───────────────────────────────── -->
+  <main id="dashboard" class="hidden">
+
+    <!-- Row 1: Sensor Values | Real-Time Graph -->
+    <div class="card" id="sensor-card">
+      <h2>📡 Sensor Values</h2>
+      <div class="sensor-grid">
+        <div class="sensor-block">
+          <span class="sensor-label">Accel X</span>
+          <span class="sensor-value" id="ax">0.00</span>
+          <span class="sensor-unit">m/s²</span>
+        </div>
+        <div class="sensor-block">
+          <span class="sensor-label">Accel Y</span>
+          <span class="sensor-value" id="ay">0.00</span>
+          <span class="sensor-unit">m/s²</span>
+        </div>
+        <div class="sensor-block">
+          <span class="sensor-label">Accel Z</span>
+          <span class="sensor-value" id="az">0.00</span>
+          <span class="sensor-unit">m/s²</span>
+        </div>
+        <div class="sensor-block">
+          <span class="sensor-label">Alpha (α)</span>
+          <span class="sensor-value" id="alpha">0.00</span>
+          <span class="sensor-unit">°</span>
+        </div>
+        <div class="sensor-block">
+          <span class="sensor-label">Beta (β)</span>
+          <span class="sensor-value" id="beta">0.00</span>
+          <span class="sensor-unit">°</span>
+        </div>
+        <div class="sensor-block">
+          <span class="sensor-label">Gamma (γ)</span>
+          <span class="sensor-value" id="gamma">0.00</span>
+          <span class="sensor-unit">°</span>
+        </div>
+      </div>
+      <div class="motion-type-display">
+        <span>Motion:</span>
+        <strong id="motion-type">–</strong>
+      </div>
+    </div>
+
+    <div class="card" id="graph-card">
+      <h2>📈 Acceleration vs Time</h2>
+      <canvas id="accel-chart"></canvas>
+    </div>
+
+    <!-- Row 2: Intensity Meter | Orientation Indicator -->
+    <div class="card" id="meter-card">
+      <h2>⚡ Motion Intensity</h2>
+      <canvas id="intensity-gauge"></canvas>
+      <div id="intensity-label" class="intensity-label">0.00 m/s²</div>
+      <div id="intensity-level" class="intensity-level level-low">LOW</div>
+    </div>
+
+    <div class="card" id="orientation-card">
+      <h2>🧭 Orientation</h2>
+      <div id="cube-wrapper">
+        <div id="cube-scene">
+          <div id="cube">
+            <div class="face front">Front</div>
+            <div class="face back">Back</div>
+            <div class="face left">Left</div>
+            <div class="face right">Right</div>
+            <div class="face top">Top</div>
+            <div class="face bottom">Bottom</div>
+          </div>
+        </div>
+      </div>
+      <div class="orientation-angles">
+        <span>α <b id="disp-alpha">0°</b></span>
+        <span>β <b id="disp-beta">0°</b></span>
+        <span>γ <b id="disp-gamma">0°</b></span>
+      </div>
+    </div>
+
+    <!-- Row 3: Movement Log | Trajectory -->
+    <div class="card" id="log-card">
+      <h2>📋 Movement Log</h2>
+      <ul id="event-log"></ul>
+    </div>
+
+    <div class="card" id="trajectory-card">
+      <h2>🗺️ Motion Trajectory</h2>
+      <canvas id="trajectory-canvas"></canvas>
+      <button id="clear-trajectory-btn" class="secondary-btn">Clear Trajectory</button>
+    </div>
+
+  </main>
+
+  <!-- Scripts (load order matters) -->
+  <script src="motion.js"></script>
+  <script src="graphs.js"></script>
+  <script src="trajectory.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
