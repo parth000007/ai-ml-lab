@@ -97,14 +97,22 @@ async def export_session_data(
     session_id: str,
     request: ExportRequest,
 ) -> dict[str, Any]:
-    """Export session readings into CSV files for each duration window."""
-    if not storage.get_session(session_id):
-        raise HTTPException(status_code=404, detail="Session not found or empty")
+    """Export session readings into CSV files for each duration window.
 
+    POST is used to accept a JSON body of durations to avoid query-length limits;
+    repeated calls intentionally overwrite the same filenames so exports remain
+    idempotent for the same data.
+    Returns a mapping of duration (ms) to the list of exported file paths
+    (relative to the exports directory) using the pattern
+    "{session_id}_{duration_ms}ms_{first_timestamp}_{last_timestamp}.csv".
+    """
     try:
         exports = storage.export_session(session_id, request.durations_ms)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if not exports:
+        raise HTTPException(status_code=404, detail="Session not found or empty")
 
     return {"session_id": session_id, "exports": exports}
 
