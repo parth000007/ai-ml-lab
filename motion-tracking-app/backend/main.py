@@ -6,6 +6,8 @@ Endpoints
 ---------
 POST /sensor-data          — store a single sensor reading
 GET  /session-data/{sid}   — retrieve all readings for a session
+GET  /session-data/{sid}/csv — download session data as CSV
+GET  /session-data/{sid}/xml — download session data as XML
 GET  /sessions             — list all session IDs
 DELETE /session-data/{sid} — clear a session
 
@@ -18,12 +20,16 @@ Run with:
 """
 from __future__ import annotations
 
+import csv
+import io
 import math
 import uuid
+import xml.etree.ElementTree as ET
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import storage
@@ -71,6 +77,57 @@ async def get_session_data(session_id: str) -> dict[str, Any]:
     if not data:
         raise HTTPException(status_code=404, detail="Session not found or empty")
     return {"session_id": session_id, "count": len(data), "data": data}
+
+
+_CSV_FIELDS = ["timestamp", "ax", "ay", "az", "alpha", "beta", "gamma",
+               "motion_intensity", "session_id"]
+
+
+@app.get("/session-data/{session_id}/csv")
+async def download_session_csv(session_id: str) -> StreamingResponse:
+    """Download all readings for a session as a CSV file."""
+    data = storage.get_session(session_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Session not found or empty")
+
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=_CSV_FIELDS, extrasaction="ignore",
+                            lineterminator="\r\n")
+    writer.writeheader()
+    writer.writerows(data)
+    buf.seek(0)
+
+    filename = f"motion_{session_id[:8]}.csv"
+    return StreamingResponse(
+        iter([buf.read()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/session-data/{session_id}/xml")
+async def download_session_xml(session_id: str) -> StreamingResponse:
+    """Download all readings for a session as an XML file."""
+    data = storage.get_session(session_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Session not found or empty")
+
+    root = ET.Element("motion_recording", session_id=session_id)
+    for record in data:
+        sample = ET.SubElement(root, "sample")
+        for field in _CSV_FIELDS:
+            child = ET.SubElement(sample, field)
+            child.text = str(record.get(field, ""))
+
+    xml_bytes = ET.tostring(root, encoding="UTF-8", xml_declaration=True)
+    xml_content = xml_bytes.decode("utf-8")
+
+    filename = f"motion_{session_id[:8]}.xml"
+    return StreamingResponse(
+        iter([xml_content]),
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/sessions")

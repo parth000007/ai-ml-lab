@@ -40,6 +40,15 @@
   const eventLog            = document.getElementById('event-log');
   const clearTrajectoryBtn  = document.getElementById('clear-trajectory-btn');
 
+  // ── Recording DOM refs ───────────────────────────────────
+  const startRecordingBtn   = document.getElementById('start-recording-btn');
+  const stopRecordingBtn    = document.getElementById('stop-recording-btn');
+  const recordingStatus     = document.getElementById('recording-status');
+  const recordingCount      = document.getElementById('recording-count');
+  const recordingDownloads  = document.getElementById('recording-downloads');
+  const downloadCsvBtn      = document.getElementById('download-csv-btn');
+  const downloadXmlBtn      = document.getElementById('download-xml-btn');
+
   // ── Sensor state ─────────────────────────────────────────────
   const sensorState = {
     ax: 0, ay: 0, az: 0,
@@ -50,6 +59,16 @@
 
   let prevMotionType  = '';
   let lastTimestamp   = null;
+
+  // ── Recording state ──────────────────────────────────────
+  let isRecording      = false;
+  const recordedData   = [];  // holds row objects while recording
+  const RECORD_INTERVAL_MS = 100; // ~10 samples/sec — prevents memory overload
+  let   lastRecordTs   = 0;
+
+  // ── Recorded data fields ─────────────────────────────────
+  const RECORD_FIELDS = ['timestamp', 'ax', 'ay', 'az', 'alpha', 'beta', 'gamma',
+                         'motion_intensity', 'motion_type'];
 
   // ── Intensity gauge canvas ───────────────────────────────────
   const gaugeCanvas = document.getElementById('intensity-gauge');
@@ -212,6 +231,26 @@
     // ── Update trajectory
     Trajectory.update(ax, ay, az, dt);
 
+    // ── Record sample if recording is active
+    if (isRecording) {
+      const now = Date.now();
+      if (now - lastRecordTs >= RECORD_INTERVAL_MS) {
+        lastRecordTs = now;
+        recordedData.push({
+          timestamp:        now,
+          ax:               ax,
+          ay:               ay,
+          az:               az,
+          alpha:            alpha,
+          beta:             beta,
+          gamma:            gamma,
+          motion_intensity: mag,
+          motion_type:      motionType,
+        });
+        recordingCount.textContent = recordedData.length + ' samples';
+      }
+    }
+
     requestAnimationFrame(_renderLoop);
   }
 
@@ -273,5 +312,71 @@
 
   // ── Clear Trajectory ─────────────────────────────────────────
   clearTrajectoryBtn.addEventListener('click', () => Trajectory.clear());
+
+  // ── Recording Controls ────────────────────────────────────────
+  startRecordingBtn.addEventListener('click', () => {
+    recordedData.length = 0;
+    isRecording = true;
+    startRecordingBtn.disabled = true;
+    stopRecordingBtn.disabled  = false;
+    recordingStatus.textContent = '● Recording…';
+    recordingStatus.classList.add('status-active');
+    recordingCount.textContent  = '0 samples';
+    recordingDownloads.classList.add('hidden');
+    _logEvent('Recording started');
+  });
+
+  stopRecordingBtn.addEventListener('click', () => {
+    isRecording = false;
+    startRecordingBtn.disabled = false;
+    stopRecordingBtn.disabled  = true;
+    recordingStatus.textContent = 'Stopped — ' + recordedData.length + ' samples recorded';
+    recordingStatus.classList.remove('status-active');
+    recordingCount.textContent = '';
+    if (recordedData.length > 0) {
+      recordingDownloads.classList.remove('hidden');
+    }
+    _logEvent('Recording stopped (' + recordedData.length + ' samples)');
+  });
+
+  // ── CSV Download ──────────────────────────────────────────────
+  downloadCsvBtn.addEventListener('click', () => {
+    if (recordedData.length === 0) return;
+    const rows = recordedData.map(r =>
+      RECORD_FIELDS.map(h => r[h] !== undefined ? r[h] : '').join(',')
+    );
+    const csvContent = [RECORD_FIELDS.join(','), ...rows].join('\r\n');
+    _triggerDownload(csvContent, 'motion_recording.csv', 'text/csv;charset=utf-8;');
+  });
+
+  // ── XML Download ──────────────────────────────────────────────
+  downloadXmlBtn.addEventListener('click', () => {
+    if (recordedData.length === 0) return;
+    const lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<motion_recording>'];
+    recordedData.forEach(r => {
+      lines.push('  <sample>');
+      RECORD_FIELDS.forEach(k => {
+        const val = r[k] !== undefined
+          ? String(r[k]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          : '';
+        lines.push(`    <${k}>${val}</${k}>`);
+      });
+      lines.push('  </sample>');
+    });
+    lines.push('</motion_recording>');
+    _triggerDownload(lines.join('\n'), 'motion_recording.xml', 'application/xml;charset=utf-8;');
+  });
+
+  function _triggerDownload(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
 })();

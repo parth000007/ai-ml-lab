@@ -112,6 +112,22 @@
       <button id="clear-trajectory-btn" class="secondary-btn">Clear Trajectory</button>
     </div>
 
+    <!-- Row 4: Recording Controls (full width) -->
+    <div class="card" id="recording-card">
+      <h2>⏺️ Motion Recording</h2>
+      <div class="recording-controls">
+        <button id="start-recording-btn" class="record-btn record-btn-start">▶ Start Recording</button>
+        <button id="stop-recording-btn"  class="record-btn record-btn-stop" disabled>⏹ Stop Recording</button>
+        <span id="recording-status" class="recording-status">Not recording</span>
+        <span id="recording-count"  class="recording-count"></span>
+      </div>
+      <div class="recording-downloads hidden" id="recording-downloads">
+        <p class="download-label">Download recorded data:</p>
+        <button id="download-csv-btn" class="record-btn record-btn-download">⬇ Download CSV</button>
+        <button id="download-xml-btn" class="record-btn record-btn-download">⬇ Download XML</button>
+      </div>
+    </div>
+
   </main>
 
   <!-- Scripts (load order matters) -->
