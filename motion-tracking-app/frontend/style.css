@@ -294,6 +294,82 @@ header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: .3px; }
 }
 .secondary-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ── Recording Card ──────────────────────────────────────── */
+#recording-card {
+  grid-column: 1 / -1;
+}
+
+.recording-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.recording-status {
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.recording-status.status-active {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.recording-count {
+  font-size: .8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.recording-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.download-label {
+  font-size: .82rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.record-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+}
+.record-btn:active { transform: scale(.97); }
+.record-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+.record-btn-start {
+  background: var(--red);
+  color: #fff;
+}
+.record-btn-start:hover:not(:disabled) { opacity: .85; }
+
+.record-btn-stop {
+  background: #21262d;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.record-btn-stop:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+.record-btn-download {
+  background: #1a4a2e;
+  color: var(--green);
+  border: 1px solid #2ea04340;
+}
+.record-btn-download:hover { opacity: .85; }
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   #dashboard {
